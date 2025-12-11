@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Okul Gazetesi - Mini Bulmaca</title>
+<style>
+  :root{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;font-size:16px}
+  body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;background:linear-gradient(180deg,#f6f8fc,#ffffff);color:#111}
+  .card{max-width:720px;width:100%;background:#fff;border-radius:12px;padding:24px;box-shadow:0 6px 30px rgba(15,23,42,0.08);border:1px solid rgba(15,23,42,0.04)}
+  h1{margin:0 0 6px;font-size:20px}
+  p.lead{margin:0 0 16px;color:#444}
+  .puzzle{background:#f3f6fb;border-radius:10px;padding:16px;margin:12px 0}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #d9e2f0;font-size:15px}
+  button{padding:10px 14px;border-radius:8px;border:0;background:#0b63ff;color:#fff;font-weight:600;cursor:pointer}
+  button.secondary{background:#e6eefc;color:#064; font-weight:600}
+  .msg{margin-top:12px}
+  .hint{margin-top:8px;color:#0b63ff;font-weight:600}
+  .footer{font-size:13px;color:#666;margin-top:14px}
+  .small{font-size:13px;color:#666}
+  @media (max-width:420px){body{padding:12px}.card{padding:16px}}
+</style>
+</head>
+<body>
+  <main class="card" role="main">
+    <h1>Okul Gazetesi - Mini Bulmaca</h1>
+    <p class="lead">QR'ı taradın, hadi bakalım: Aşağıdaki ipucunu kullanarak doğru kelimeyi gir. 3 denemeden sonra küçük ipucu verilecek.</p>
+
+    <div class="puzzle" aria-live="polite">
+      <strong>İpucu:</strong>
+      <div style="margin-top:8px">
+        "Okulun içinde ama sınıfta değil; bazen sessizdir, bazen dersin yıldızı olur." 
+      </div>
+    </div>
+
+    <label class="small" for="answer">Cevabın (tek kelime):</label>
+    <div class="controls">
+      <input id="answer" type="text" autocomplete="off" placeholder="Cevabı buraya yaz" />
+      <button id="submit">Gönder</button>
+      <button id="hintBtn" class="secondary">İpucu al</button>
+    </div>
+
+    <div class="msg" id="msg" aria-live="assertive"></div>
+    <div class="hint" id="hintArea" style="display:none"></div>
+
+    <div class="footer">
+      <div class="small">Not: Cevabı küçük/büyük harf farkı olmadan gir. Test için telefonla açıp dene.</div>
+    </div>
+  </main>
+
+<script>
+(function(){
+  // BURAYA BULMACANIN CEVABINI DEĞİŞTİR (örn: "kütüphane")
+  const ANSWER = "kütüphane";
+  const maxAttempts = 3;
+  let attempts = 0;
+  const input = document.getElementById('answer');
+  const submit = document.getElementById('submit');
+  const msg = document.getElementById('msg');
+  const hintBtn = document.getElementById('hintBtn');
+  const hintArea = document.getElementById('hintArea');
+
+  function sanitize(s){
+    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
+  }
+
+  function showMessage(text, ok){
+    msg.textContent = text;
+    msg.style.color = ok ? '#0b8a3e' : '#c0392b';
+  }
+
+  submit.addEventListener('click', tryAnswer);
+  input.addEventListener('keydown', function(e){
+    if(e.key === 'Enter') tryAnswer();
+  });
+
+  hintBtn.addEventListener('click', function(){
+    attempts++;
+    if(attempts >= maxAttempts){
+      hintArea.style.display = 'block';
+      hintArea.textContent = 'İpucu: Cevap "k" harfi ile başlar ve okulun sessiz dostudur.';
+      showMessage('İpucu verildi. Hadi artık çöz.', true);
+      hintBtn.disabled = true;
+    } else {
+      hintArea.style.display = 'block';
+      hintArea.textContent = 'Küçük ipucu: Bazen kitaplarla doludur.';
+      showMessage('Küçük ipucu verildi. Denemeye devam et.', true);
+    }
+  });
+
+  function tryAnswer(){
+    const val = input.value || '';
+    if(!val.trim()){
+      showMessage('Bir şey yazman gerekiyor, boş şaka kabul etmiyorum.', false);
+      return;
+    }
+    attempts++;
+    if(sanitize(val) === sanitize(ANSWER)){
+      showMessage('Tebrikler! Doğru cevap. 🎉', true);
+      successScreen();
+    } else {
+      if(attempts >= maxAttempts){
+        showMessage('Yanlış — maksimum deneme sayısına ulaştın. Doğru cevap: ' + ANSWER, false);
+        hintArea.style.display = 'block';
+        hintArea.textContent = 'Cevap: ' + ANSWER;
+        submit.disabled = true;
+        input.disabled = true;
+      } else {
+        showMessage('Yanlış cevap. Kalan deneme: ' + (maxAttempts - attempts), false);
+      }
+    }
+  }
+
+  function successScreen(){
+    // Basit kutlama görünümü
+    const card = document.querySelector('.card');
+    card.innerHTML = `
+      <h1>✅ Doğru!</h1>
+      <p class="lead">Tebrikler — bulmacayı çözdün. Gazeteye katkın için teşekkürler!</p>
+      <p class="small">Bunu başarıyla tamamladın. QR'ı gazetede kullanabilirsin.</p>
+    `;
+  }
+})();
+</script>
+</body>
+</html>
