@@ -1,127 +1,419 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Okul Gazetesi - Mini Bulmaca</title>
-<style>
-  :root{font-family:Inter,system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;font-size:16px}
-  body{display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;padding:20px;background:linear-gradient(180deg,#f6f8fc,#ffffff);color:#111}
-  .card{max-width:720px;width:100%;background:#fff;border-radius:12px;padding:24px;box-shadow:0 6px 30px rgba(15,23,42,0.08);border:1px solid rgba(15,23,42,0.04)}
-  h1{margin:0 0 6px;font-size:20px}
-  p.lead{margin:0 0 16px;color:#444}
-  .puzzle{background:#f3f6fb;border-radius:10px;padding:16px;margin:12px 0}
-  .controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-  input[type="text"]{flex:1;padding:10px;border-radius:8px;border:1px solid #d9e2f0;font-size:15px}
-  button{padding:10px 14px;border-radius:8px;border:0;background:#0b63ff;color:#fff;font-weight:600;cursor:pointer}
-  button.secondary{background:#e6eefc;color:#064; font-weight:600}
-  .msg{margin-top:12px}
-  .hint{margin-top:8px;color:#0b63ff;font-weight:600}
-  .footer{font-size:13px;color:#666;margin-top:14px}
-  .small{font-size:13px;color:#666}
-  @media (max-width:420px){body{padding:12px}.card{padding:16px}}
-</style>
+  <meta charset="UTF-8" />
+  <title>Genel Kültür Oyunu</title>
+  <style>
+    body {
+      font-family: 'Inter', Arial, sans-serif;
+      background: #0f0f0f;
+      color: #e5e7eb;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .cursor-light {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 240px;
+      height: 240px;
+      border-radius: 25%;
+      pointer-events: none;
+      background: radial-gradient(circle, rgba(255,255,255,0.14) 0%, rgba(255,255,255,0.08) 18%, rgba(255,255,255,0.04) 32%, rgba(255,255,255,0.015) 45%, transparent 60%);
+      transform: translate(-50%, -50%);
+      z-index: 0;
+      mix-blend-mode: screen;
+      transition: opacity 0.2s ease;
+    }
+
+    .hud-card {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      background: rgba(33,33,33,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 13px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6), inset 0 0 24px rgba(255,255,255,0.03);
+      opacity: 0.9;
+      pointer-events: none;
+      display: none;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 2;
+    }
+
+    .topscore-card {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: rgba(33,33,33,0.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 12px 16px;
+      font-size: 13px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.6), inset 0 0 24px rgba(255,255,255,0.03);
+      opacity: 0.9;
+      pointer-events: none;
+      display: none;
+      z-index: 2;
+    }
+
+    .card {
+      background: rgba(33,33,33,0.5);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      padding: 28px;
+      border-radius: 18px;
+      width: 420px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.55), inset 0 0 40px rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      text-align: center;
+      overflow: hidden;
+      z-index: 1;
+      animation: idleBreath 8s ease-in-out infinite;
+    }
+
+    @keyframes idleBreath {
+      0% { box-shadow: 0 20px 45px rgba(0,0,0,0.6); }
+      50% { box-shadow: 0 24px 55px rgba(0,0,0,0.7); }
+      100% { box-shadow: 0 20px 45px rgba(0,0,0,0.6); }
+    }
+
+    h1 {
+      margin-bottom: 16px;
+      font-size: 20px;
+    }
+
+    .question {
+      margin-bottom: 16px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 14px;
+      border: 1px solid #2f2f2f;
+      border-radius: 12px;
+      background: #1a1a1a;
+      color: #e5e7eb;
+      cursor: pointer;
+      font-size: 14px;
+      transition: transform 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button:hover {
+      background: #262626;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.5);
+    }
+
+    button.correct {
+      background: #163a2d;
+      color: #9ae6b4;
+      border-color: #2f855a;
+      transform: scale(1.05);
+    }
+
+    button.wrong {
+      background: #3a1f23;
+      color: #feb2b2;
+      border-color: #9b2c2c;
+      animation: shake 0.3s;
+    }
+
+    .hidden { display: none; }
+
+    .blink-out { animation: blinkOut 0.35s ease forwards; }
+    .blink-in { animation: blinkIn 0.45s ease forwards; }
+
+    @keyframes blinkOut {
+      0% { transform: scaleY(1); opacity: 1; }
+      100% { transform: scaleY(0); opacity: 0; }
+    }
+
+    @keyframes blinkIn {
+      0% { transform: scaleY(0); opacity: 0; }
+      100% { transform: scaleY(1); opacity: 1; }
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-4px); }
+      50% { transform: translateX(4px); }
+      75% { transform: translateX(-4px); }
+      100% { transform: translateX(0); }
+    }
+
+    .result {
+      margin-top: 12px;
+      font-weight: bold;
+    }
+
+    .ambient-bar {
+      position: fixed;
+      bottom: 14px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 14px;
+      color: #e5e7eb;
+      opacity: 0.9;
+      letter-spacing: 0.4px;
+      pointer-events: none;
+      transition: opacity 0.6s ease, transform 0.6s ease;
+      z-index: 1;
+    }
+
+    .ambient-label {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.6;
+      margin-bottom: 4px;
+    }
+  </style>
+  </style>
 </head>
 <body>
-  <main class="card" role="main">
-    <h1>Okul Gazetesi - Mini Bulmaca</h1>
-    <p class="lead">QR'ı taradın, hadi bakalım: Aşağıdaki ipucunu kullanarak doğru kelimeyi gir. 3 denemeden sonra küçük ipucu verilecek.</p>
+  <div class="cursor-light" id="cursorLight"></div>
+  <div class="hud-card" id="hud">
+    <div class="hud-line" id="hud-progress">0 / 25</div>
+    <div class="hud-line" id="hud-score">Doğru: 0</div>
+  </div>
 
-    <div class="puzzle" aria-live="polite">
-      <strong>İpucu:</strong>
-      <div style="margin-top:8px">
-        "Okulun içinde ama sınıfta değil; bazen sessizdir, bazen dersin yıldızı olur." 
-      </div>
+  <div class="topscore-card" id="topscore">
+    Top Score: <span id="topscore-value">0</span>
+  </div>
+    <div class="hud-line" id="hud-score"></div>
+
+  <div class="ambient-bar" id="ambient">
+    <span class="ambient-label">Bunu biliyor muydunuz?</span>
+    <span id="ambient-text"></span>
+  </div>
+
+  <div class="card">
+    <h1>Genel Kültür Oyunu</h1>
+    
+
+    <button id="startBtn">Başla</button>
+
+    <div id="game" class="hidden">
+      <div class="question" id="question"></div>
+      <div id="answers"></div>
+      <div class="result" id="result"></div>
     </div>
 
-    <label class="small" for="answer">Cevabın (tek kelime):</label>
-    <div class="controls">
-      <input id="answer" type="text" autocomplete="off" placeholder="Cevabı buraya yaz" />
-      <button id="submit">Gönder</button>
-      <button id="hintBtn" class="secondary">İpucu al</button>
-    </div>
+    <button id="retryBtn" class="hidden">Tekrar Dene</button>
+  </div>
 
-    <div class="msg" id="msg" aria-live="assertive"></div>
-    <div class="hint" id="hintArea" style="display:none"></div>
+  <script>
+    const questions = [
+      { q: "Avrupa Birliği'nin resmi sloganı hangisidir?", a: ["Unity in Diversity", "Peace and Progress", "One Europe", "Shared Future"], correct: 0 },
+      { q: "İlk modern olimpiyat oyunları hangi yıl düzenlenmiştir?", a: ["1896", "1900", "1888", "1912"], correct: 0 },
+      { q: "Platon'un mağara alegorisi hangi eserinde geçer?", a: ["Devlet", "Şölen", "Sokrates'in Savunması", "Phaidon"], correct: 0 },
+      { q: "Periyodik tabloda atom numarası en yüksek element hangisidir?", a: ["Oganesson", "Uranium", "Plutonium", "Neptunium"], correct: 0 },
+      { q: "Osmanlı'da ilk nüfus sayımı hangi padişah döneminde yapılmıştır?", a: ["II. Mahmud", "III. Selim", "Abdülmecid", "I. Abdülhamid"], correct: 0 },
+      { q: "Schrödinger'in Kedisi düşünce deneyi hangi alanla ilgilidir?", a: ["Kuantum mekaniği", "Termodinamik", "Astrofizik", "Nükleer kimya"], correct: 0 },
+      { q: "Fransız Devrimi hangi yılda başlamıştır?", a: ["1789", "1776", "1804", "1815"], correct: 0 },
+      { q: "Roma İmparatorluğu ikiye hangi yılda ayrılmıştır?", a: ["395", "330", "410", "476"], correct: 0 },
+      { q: "DNA'nın çift sarmal yapısını kimler keşfetmiştir?", a: ["Watson ve Crick", "Darwin ve Wallace", "Curie çifti", "Tesla ve Edison"], correct: 0 },
+      { q: "Dünyanın en büyük çölü hangisidir?", a: ["Antarktika", "Sahra", "Gobi", "Arabistan"], correct: 0 },
+      { q: "İlk yazılı anayasa hangi ülkeye aittir?", a: ["ABD", "Fransa", "İngiltere", "Almanya"], correct: 0 },
+      { q: "Hangisi bir Rönesans sanatçısı değildir?", a: ["Caravaggio", "Leonardo da Vinci", "Michelangelo", "Raffaello"], correct: 0 },
+      { q: "Işık yılı neyi ifade eder?", a: ["Mesafe", "Zaman", "Hız", "Enerji"], correct: 0 },
+      { q: "Hangi gezegen en kısa yıla sahiptir?", a: ["Merkür", "Mars", "Venüs", "Dünya"], correct: 0 },
+      { q: "Magna Carta hangi ülkede imzalanmıştır?", a: ["İngiltere", "Fransa", "İtalya", "İspanya"], correct: 0 },
+      { q: "Hangisi Antik Yunan filozofu değildir?", a: ["Seneca", "Platon", "Aristoteles", "Sokrates"], correct: 0 },
+      { q: "İnsan vücudunda en fazla bulunan element hangisidir?", a: ["Oksijen", "Karbon", "Hidrojen", "Azot"], correct: 0 },
+      { q: "Ay'a ilk ayak basan insan kimdir?", a: ["Neil Armstrong", "Buzz Aldrin", "Yuri Gagarin", "Michael Collins"], correct: 0 },
+      { q: "Soğuk Savaş hangi iki blok arasında yaşanmıştır?", a: ["ABD-SSCB", "ABD-Almanya", "SSCB-Çin", "İngiltere-Fransa"], correct: 0 },
+      { q: "Hangisi bir programlama paradigması değildir?", a: ["Deterministik", "Fonksiyonel", "Nesne yönelimli", "Mantıksal"], correct: 0 }
+    ];
 
-    <div class="footer">
-      <div class="small">Not: Cevabı küçük/büyük harf farkı olmadan gir. Test için telefonla açıp dene.</div>
-    </div>
-  </main>
+    let current = 0;
+    let topScore = Number(localStorage.getItem("topScore") || 0);
+    let score = 0;
 
-<script>
-(function(){
-  // BURAYA BULMACANIN CEVABINI DEĞİŞTİR (örn: "kütüphane")
-  const ANSWER = "kütüphane";
-  const maxAttempts = 3;
-  let attempts = 0;
-  const input = document.getElementById('answer');
-  const submit = document.getElementById('submit');
-  const msg = document.getElementById('msg');
-  const hintBtn = document.getElementById('hintBtn');
-  const hintArea = document.getElementById('hintArea');
+    const startBtn = document.getElementById("startBtn");
+    const cardEl = document.querySelector(".card");
+    const retryBtn = document.getElementById("retryBtn");
+    const gameEl = document.getElementById("game");
+    const questionEl = document.getElementById("question");
+    const answersEl = document.getElementById("answers");
+    const resultEl = document.getElementById("result");
+    const hudProgressEl = document.getElementById("hud-progress");
+    const hudScoreEl = document.getElementById("hud-score");
+    const topScoreEl = document.getElementById("topscore-value");
+    const topScoreCard = document.getElementById("topscore");
+    const ambientEl = document.getElementById("ambient");
+    const ambientTextEl = document.getElementById("ambient-text");
+    const cursorLight = document.getElementById("cursorLight");
 
-  function sanitize(s){
-    return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
-  }
+    const ambientTexts = [
+      "Ahtapotların üç kalbi vardır",
+      "Venüs kendi ekseninde ters döner",
+      "İnsan kemikleri çelikten daha güçlüdür (ağırlık başına)",
+      "Bal, bozulmayan nadir gıdalardandır",
+      "Satrançtaki olası oyun sayısı atom sayısından fazladır",
+      "Wombat dışkısı küp şeklindedir",
+      "Bir gün, Dünya'nın dönüşü yavaşladığı için 25 saat olabilir",
+      "Kleopatra, Ay'a inişten daha yakın bir tarihte yaşadı",
+      "Ağaçlar birbirleriyle kimyasal sinyallerle iletişim kurar",
+      "İnsan beyninde yaklaşık 86 milyar nöron bulunur"
+    ];
 
-  function showMessage(text, ok){
-    msg.textContent = text;
-    msg.style.color = ok ? '#0b8a3e' : '#c0392b';
-  }
+    let ambientIndex = 0;
 
-  submit.addEventListener('click', tryAnswer);
-  input.addEventListener('keydown', function(e){
-    if(e.key === 'Enter') tryAnswer();
-  });
-
-  hintBtn.addEventListener('click', function(){
-    attempts++;
-    if(attempts >= maxAttempts){
-      hintArea.style.display = 'block';
-      hintArea.textContent = 'İpucu: Cevap "k" harfi ile başlar ve okulun sessiz dostudur.';
-      showMessage('İpucu verildi. Hadi artık çöz.', true);
-      hintBtn.disabled = true;
-    } else {
-      hintArea.style.display = 'block';
-      hintArea.textContent = 'Küçük ipucu: Bazen kitaplarla doludur.';
-      showMessage('Küçük ipucu verildi. Denemeye devam et.', true);
+    function rotateAmbient() {
+      ambientEl.style.opacity = 0;
+      setTimeout(() => {
+        ambientTextEl.textContent = ambientTexts[ambientIndex % ambientTexts.length];
+        ambientEl.style.opacity = 0.85;
+        ambientIndex++;
+      }, 400);
     }
-  });
 
-  function tryAnswer(){
-    const val = input.value || '';
-    if(!val.trim()){
-      showMessage('Bir şey yazman gerekiyor, boş şaka kabul etmiyorum.', false);
-      return;
-    }
-    attempts++;
-    if(sanitize(val) === sanitize(ANSWER)){
-      showMessage('Tebrikler! Doğru cevap. 🎉', true);
-      successScreen();
-    } else {
-      if(attempts >= maxAttempts){
-        showMessage('Yanlış — maksimum deneme sayısına ulaştın. Doğru cevap: ' + ANSWER, false);
-        hintArea.style.display = 'block';
-        hintArea.textContent = 'Cevap: ' + ANSWER;
-        submit.disabled = true;
-        input.disabled = true;
-      } else {
-        showMessage('Yanlış cevap. Kalan deneme: ' + (maxAttempts - attempts), false);
+    setInterval(rotateAmbient, 30000);
+    rotateAmbient();
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
       }
+      return array;
     }
-  }
 
-  function successScreen(){
-    // Basit kutlama görünümü
-    const card = document.querySelector('.card');
-    card.innerHTML = `
-      <h1>✅ Doğru!</h1>
-      <p class="lead">Tebrikler — bulmacayı çözdün. Gazeteye katkın için teşekkürler!</p>
-      <p class="small">Bunu başarıyla tamamladın. QR'ı gazetede kullanabilirsin.</p>
-    `;
-  }
-})();
-</script>
+    function startGame() {
+      const hud = document.getElementById("hud");
+      hud.style.display = "none";
+      topScoreEl.textContent = topScore;
+      topScoreCard.style.display = "block";
+
+      shuffle(questions);
+      current = 0;
+      score = 0;
+
+      cardEl.classList.add("blink-out");
+
+      setTimeout(() => {
+        startBtn.classList.add("hidden");
+        retryBtn.classList.add("hidden");
+
+        gameEl.classList.remove("hidden");
+
+        cardEl.classList.remove("blink-out");
+        cardEl.classList.add("blink-in");
+
+        loadQuestion();
+        document.getElementById("hud").style.display = "flex";
+
+        setTimeout(() => {
+          cardEl.classList.remove("blink-in");
+        }, 500);
+      }, 350);
+    }
+
+    function loadQuestion() {
+      hudProgressEl.textContent = `${current + 1} / ${questions.length}`;
+      hudScoreEl.textContent = `Doğru: ${score}`;
+      resultEl.textContent = "";
+      answersEl.innerHTML = "";
+      const q = questions[current];
+      questionEl.textContent = q.q;
+
+      const answers = q.a.map((text, idx) => ({ text, idx }));
+      shuffle(answers);
+
+      answers.forEach(item => {
+        const btn = document.createElement("button");
+        btn.textContent = item.text;
+        btn.dataset.index = item.idx; // orijinal index
+        btn.onclick = () => checkAnswer(item.idx, btn);
+        answersEl.appendChild(btn);
+      });
+    }
+
+    function checkAnswer(index, btn) {
+      const buttons = document.querySelectorAll("#answers button");
+      buttons.forEach(b => b.disabled = true);
+
+      const correctIndex = questions[current].correct;
+
+      if (index === correctIndex) {
+        score++;
+        btn.classList.add("correct");
+      } else {
+        btn.classList.add("wrong");
+        const correctBtn = [...buttons].find(b => Number(b.dataset.index) === correctIndex);
+        if (correctBtn) correctBtn.classList.add("correct");
+      }
+
+      setTimeout(() => {
+        current++;
+        if (current < questions.length) {
+          loadQuestion();
+        } else {
+          endGame();
+        }
+      }, 1200);
+    }
+
+    function endGame() {
+      if (score > topScore) {
+        topScore = score;
+        localStorage.setItem("topScore", topScore);
+        topScoreEl.textContent = topScore;
+      }
+      const hud = document.getElementById("hud");
+      hud.style.display = "flex";
+      hudProgressEl.textContent = `${questions.length} / ${questions.length}`;
+      hudScoreEl.textContent = `Doğru: ${score}`;
+      cardEl.classList.add("blink-out");
+
+      setTimeout(() => {
+        gameEl.classList.add("hidden");
+        retryBtn.classList.remove("hidden");
+        questionEl.textContent = "";
+        resultEl.textContent = `Skorun: ${score} / ${questions.length}`;
+
+        cardEl.classList.remove("blink-out");
+        cardEl.classList.add("blink-in");
+
+        setTimeout(() => {
+          cardEl.classList.remove("blink-in");
+        }, 500);
+      }, 350);
+    }
+
+    startBtn.onclick = startGame;
+    retryBtn.onclick = startGame;
+
+    document.addEventListener("mousemove", (e) => {
+      cursorLight.style.left = e.clientX + "px";
+      cursorLight.style.top = e.clientY + "px";
+    });
+  </script>
 </body>
 </html>
